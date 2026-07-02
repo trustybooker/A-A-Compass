@@ -1,0 +1,315 @@
+// A&A Compass v5 — database schema.
+// Tables mirror docs/AA_Compass_v5_Production_Build_Spec.md:
+// users, subscriptions, compass_sessions, compass_results, actions, habits,
+// habit_logs, voice_sessions, weekly_reports, certification_applications,
+// certifications, credential_events, audit_logs.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Tier {
+  FREE
+  PLUS
+  PRO
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  UNPAID
+  PAUSED
+}
+
+enum SessionSource {
+  TYPED
+  VOICE
+}
+
+enum VoiceKind {
+  BROWSER
+  REALTIME_PRO
+}
+
+enum CertApplicationStatus {
+  SUBMITTED
+  IN_PROGRESS
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum CredentialStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+  EXPIRED
+}
+
+enum CredentialEventType {
+  ISSUED
+  RENEWED
+  SUSPENDED
+  REINSTATED
+  REVOKED
+  EXPIRED
+  VERIFICATION_VIEWED
+}
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  passwordHash     String
+  name             String?
+  role             Role     @default(USER)
+  // Denormalized entitlement tier; kept in sync by the Stripe webhook.
+  // Server-side checks always read this (or the live subscription), never the client.
+  tier             Tier     @default(FREE)
+  stripeCustomerId String?  @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  subscription     Subscription?
+  sessions         CompassSession[]
+  actions          ActionItem[]
+  habits           Habit[]
+  habitLogs        HabitLog[]
+  voiceSessions    VoiceSession[]
+  weeklyReports    WeeklyReport[]
+  certApplications CertificationApplication[]
+  certifications   Certification[]
+
+  @@map("users")
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String             @unique
+  stripePriceId        String
+  status               SubscriptionStatus
+  tier                 Tier
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+model CompassSession {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  area          String
+  currentState  String
+  desireText    String        @db.Text
+  fearText      String        @db.Text
+  gratitudeText String        @db.Text
+  coachingMode  String? // Advanced Pro modes: Money, Business, Purpose, Discipline, Peace, Fear Release, Gratitude, Night Review
+  source        SessionSource @default(TYPED)
+  createdAt     DateTime      @default(now())
+
+  result CompassResult?
+
+  @@index([userId, createdAt])
+  @@map("compass_sessions")
+}
+
+model CompassResult {
+  id                    String         @id @default(cuid())
+  sessionId             String         @unique
+  session               CompassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  score                 Int
+  alignmentMode         String
+  // The eight required outputs of every A&A Compass session (6A Engine):
+  truthReflection       String         @db.Text
+  deeperValue           String         @db.Text
+  misalignmentToRelease String         @db.Text
+  definiteVision        String         @db.Text
+  alignedAction         String         @db.Text
+  habitLoop             String         @db.Text
+  gratitudeAnchor       String         @db.Text
+  serviceAction         String         @db.Text
+  plan7Day              String?        @db.Text
+  plan30Day             String?        @db.Text
+  fullText              String         @db.Text
+  createdAt             DateTime       @default(now())
+
+  @@map("compass_results")
+}
+
+model ActionItem {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String?
+  description String    @db.Text
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@map("actions")
+}
+
+model Habit {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  cadence   String   @default("daily")
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  logs HabitLog[]
+
+  @@index([userId])
+  @@map("habits")
+}
+
+model HabitLog {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logDate   DateTime @db.Date
+  completed Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, logDate])
+  @@index([userId, logDate])
+  @@map("habit_logs")
+}
+
+model VoiceSession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      VoiceKind
+  model     String?
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  summary   String?   @db.Text
+
+  @@index([userId, startedAt])
+  @@map("voice_sessions")
+}
+
+model WeeklyReport {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart     DateTime @db.Date
+  tierAtRun     Tier
+  sessionsCount Int
+  averageScore  Int
+  topAreas      String
+  patterns      Json
+  insights      String   @db.Text
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, weekStart])
+  @@map("weekly_reports")
+}
+
+model CertificationApplication {
+  id     String                @id @default(cuid())
+  userId String
+  user   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status CertApplicationStatus @default(SUBMITTED)
+
+  purposeStatement String @db.Text
+
+  // Pathway steps — each requirement is tracked explicitly and none are automatic.
+  ethicsAgreedAt           DateTime?
+  identitySubmittedAt      DateTime?
+  identityVerifiedAt       DateTime? // set by admin review only
+  trainingModulesCompleted Int       @default(0)
+  trainingCompletedAt      DateTime?
+  writtenScore             Int?
+  writtenPassedAt          DateTime?
+  practicalTranscript      String?   @db.Text
+  practicalScore           Int?
+  practicalPassedAt        DateTime? // set by admin review only
+  supervisedReviewNotes    String?   @db.Text
+  supervisedReviewPassedAt DateTime? // set by admin review only
+
+  reviewerId    String?
+  decisionNotes String?   @db.Text
+  decidedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  certification Certification?
+
+  @@index([userId])
+  @@map("certification_applications")
+}
+
+model Certification {
+  id               String                   @id @default(cuid())
+  userId           String
+  user             User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId    String                   @unique
+  application      CertificationApplication @relation(fields: [applicationId], references: [id])
+  credentialId     String                   @unique // server-generated, printed on certificate + QR
+  status           CredentialStatus         @default(ACTIVE)
+  holderName       String
+  scope            String                   @default("A&A Compass Certified Alignment Coach — proprietary coaching-method certification. Not a therapy, medical, legal, financial, or ICF credential.")
+  issuedAt         DateTime                 @default(now())
+  expiresAt        DateTime
+  renewedAt        DateTime?
+  revokedAt        DateTime?
+  revocationReason String?
+
+  events CredentialEvent[]
+
+  @@map("certifications")
+}
+
+model CredentialEvent {
+  id              String              @id @default(cuid())
+  certificationId String
+  certification   Certification       @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  type            CredentialEventType
+  notes           String?
+  actorId         String?
+  createdAt       DateTime            @default(now())
+
+  @@index([certificationId, createdAt])
+  @@map("credential_events")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  // Nullable + no FK cascade so audit history survives account deletion (anonymized).
+  userId     String?
+  actorId    String?
+  action     String
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}

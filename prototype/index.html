@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A&A Compass - Prosperity Alignment Coach</title>
+  <meta name="description" content="Voice-first prosperity alignment coach for clarity, action, habits, gratitude, and service." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="brand"><span class="mark">A&A</span><span>Compass</span></div>
+    <nav>
+      <a href="#tool">Tool</a><a href="#pricing">Pricing</a><a href="#voice">Voice</a><a href="#certification">Certification</a><a href="#safety">Truth Rules</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="heroText">
+        <p class="eyebrow">Voice-first prosperity alignment coach</p>
+        <h1>Speak the desire. Find the truth. Take the next aligned step.</h1>
+        <p class="lead">A&A Compass turns thought into direction, imagination into form, faith into calm certainty, action into habit, and prosperity into service.</p>
+        <div class="heroActions"><a href="#tool" class="btn primary">Start free Compass Reading</a><a href="#pricing" class="btn">See simple pricing</a></div>
+        <p class="fine">Coaching and self-development tool only. Not therapy, legal, medical, or financial advice. No income or outcome guarantees.</p>
+      </div>
+      <div class="heroCard">
+        <img src="../assets/images/a_photorealistic_warmly_lit_modern_living_room_in.png" alt="Person speaking into a phone for a guided voice reflection" />
+        <div><b>Launch tiers:</b> Free / Plus $19 / Pro $99</div>
+      </div>
+    </section>
+
+    <section class="engine" id="engine">
+      <p class="eyebrow">The 6A Engine</p>
+      <h2>Every session produces an outcome, not just inspiration.</h2>
+      <div class="steps">
+        <div><b>1. Awareness</b><span>What is true right now?</span></div>
+        <div><b>2. Alignment</b><span>What fear or contradiction must release?</span></div>
+        <div><b>3. Aim</b><span>What definite vision will guide action?</span></div>
+        <div><b>4. Action</b><span>What is the next grounded step?</span></div>
+        <div><b>5. Accumulation</b><span>What habit compounds the result?</span></div>
+        <div><b>6. Abundance</b><span>How does this increase life?</span></div>
+      </div>
+    </section>
+
+    <section id="tool" class="tool">
+      <div>
+        <p class="eyebrow">Free daily tool</p>
+        <h2>Your Compass Reading</h2>
+        <p>Use typing or browser voice. Free browser voice is a device/browser utility and may sound different across devices. The paid Pro tier unlocks the premium A&A Aligned Voice Coach in production.</p>
+      </div>
+      <div class="panel">
+        <label>Current state
+          <select id="state">
+            <option>Ready</option><option>Stuck</option><option>Fearful</option><option>Confused</option><option>Hopeful</option><option>Grateful</option><option>Overwhelmed</option><option>Inspired</option>
+          </select>
+        </label>
+        <label>Alignment area
+          <select id="area">
+            <option>Money</option><option>Business</option><option>Purpose</option><option>Peace</option><option>Discipline</option><option>Relationships</option><option>Creativity</option><option>Service</option>
+          </select>
+        </label>
+        <label>What do you desire to create, receive, improve, or multiply?
+          <textarea id="desire" rows="3" placeholder="Example: I want to grow my income without panic and finally stay consistent."></textarea>
+        </label>
+        <label>What fear, doubt, or contradiction is pulling against it?
+          <textarea id="fear" rows="2" placeholder="Example: I keep starting strong then avoiding the hard action."></textarea>
+        </label>
+        <label>Gratitude anchor - name 1 to 3 things already supporting you.
+          <textarea id="gratitude" rows="2" placeholder="Example: life, tools, ideas, one person who believes in me."></textarea>
+        </label>
+        <div class="buttons">
+          <button id="speak" class="btn">Speak desire</button>
+          <button id="generate" class="btn primary">Generate reading</button>
+        </div>
+        <div id="result" class="result hidden"></div>
+        <div id="resultActions" class="buttons hidden">
+          <button id="read" class="btn">Read aloud</button><button id="copy" class="btn">Copy</button><button id="save" class="btn">Save session</button><button id="download" class="btn">Download TXT</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing" class="pricing">
+      <p class="eyebrow">Simple launch pricing</p>
+      <h2>Three tiers only. No confusion.</h2>
+      <div class="cards">
+        <article class="price"><h3>Free</h3><p class="money">$0</p><ul><li>1 daily Compass Reading</li><li>Browser voice input if supported</li><li>Browser read-aloud if supported</li><li>Basic score and next action</li><li>Local-only history</li></ul><button data-plan="free" class="choose">Preview Free</button></article>
+        <article class="price featured"><h3>Plus</h3><p class="money">$19/mo</p><ul><li>Unlimited Compass sessions</li><li>Cloud history in production</li><li>Streaks, habit loops, reminders</li><li>Saved listen mode and exports</li><li>7-day and 30-day plans</li></ul><button data-plan="plus" class="choose">Preview Plus</button></article>
+        <article class="price"><h3>Pro</h3><p class="money">$99/mo</p><ul><li>Premium A&A Aligned Voice Coach</li><li>Smart follow-up questions</li><li>Pattern memory and weekly reports</li><li>Advanced coaching modes</li><li>Certification pathway access</li></ul><button data-plan="pro" class="choose">Preview Pro</button></article>
+      </div>
+      <p id="planNotice" class="notice">Prototype plan: Free. In production, Stripe controls real access.</p>
+    </section>
+
+    <section id="voice" class="voice">
+      <div><p class="eyebrow">Voice ladder</p><h2>Free samples voice. Pro transforms with voice.</h2><p>Free voice is browser-native and clearly labeled. Plus saves the journey. Pro unlocks the premium aligned voice coach with realtime conversation, pattern memory, and weekly reports.</p></div>
+      <div class="panel"><h3>Voice Coach Preview</h3><p id="voiceStatus">Select Pro to unlock the premium voice coach preview. Free and Plus can still use browser read-aloud.</p><button id="voiceCoach" class="btn primary">Run voice coach preview</button><div id="voiceOutput" class="result hidden"></div></div>
+    </section>
+
+    <section id="certification" class="cert">
+      <div><p class="eyebrow">Professional pathway</p><h2>Certification is Pro-only, gated, and verifiable.</h2><p>Certification is not a public fourth price. It is an eligibility pathway inside Pro with application, ethics agreement, training completion, assessment, supervised practice, credential ID, QR verification, renewal, and revocation.</p></div>
+      <div class="panel"><h3>Certification Access</h3><div id="certStatus" class="notice">Locked unless user is Pro and approved.</div><ul><li>Identity and ethics agreement required</li><li>Assessment score required</li><li>Supervised practice review required</li><li>Credential is verified on a public verification page</li><li>Revocable for misuse or false claims</li></ul></div>
+    </section>
+
+    <section id="history" class="history">
+      <p class="eyebrow">Saved sessions</p><h2>Prototype history</h2><div id="historyList" class="historyList"></div>
+    </section>
+
+    <section id="safety" class="safety"><p class="eyebrow">Truth rules</p><h2>What the coach never does</h2><div class="steps"><div><b>No fake guarantees</b><span>No promised wealth, healing, income, or manifestation.</span></div><div><b>No blame</b><span>Hardship is never blamed on the user.</span></div><div><b>No dependency</b><span>The tool strengthens autonomy and choice.</span></div><div><b>No professional replacement</b><span>Not therapy, medical, legal, or financial advice.</span></div><div><b>Always action</b><span>Belief must become grounded action.</span></div><div><b>Always service</b><span>Prosperity must increase life.</span></div></div></section>
+  </main>
+  <footer>© A&A Compass. Prototype for production build. Coaching support only. Truth, action, habit, gratitude, service.</footer>
+  <script src="app.js"></script>
+</body>
+</html>

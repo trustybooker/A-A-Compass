@@ -1,0 +1,90 @@
+{
+  "version": "v5",
+  "public_tiers": [
+    {
+      "id": "free",
+      "price_monthly": 0,
+      "label": "Free",
+      "access": [
+        "1 daily typed Compass Reading",
+        "browser-native voice utility",
+        "browser-native read-aloud",
+        "basic score",
+        "local history"
+      ],
+      "locked": [
+        "cloud history",
+        "unlimited sessions",
+        "premium voice coach",
+        "certification"
+      ]
+    },
+    {
+      "id": "plus",
+      "price_monthly": 19,
+      "label": "Plus",
+      "access": [
+        "unlimited sessions",
+        "cloud history",
+        "streaks",
+        "habit loops",
+        "reminders",
+        "saved listen mode",
+        "exports",
+        "7-day and 30-day plans"
+      ],
+      "locked": [
+        "premium realtime voice coach",
+        "certification pathway"
+      ]
+    },
+    {
+      "id": "pro",
+      "price_monthly": 99,
+      "label": "Pro",
+      "access": [
+        "premium A&A Aligned Voice Coach",
+        "pattern memory",
+        "weekly reports",
+        "advanced coaching modes",
+        "30-day transformation plans",
+        "certification pathway eligibility"
+      ],
+      "locked": [
+        "automatic certification",
+        "admin tools"
+      ]
+    }
+  ],
+  "session_required_outputs": [
+    "truth_reflection",
+    "deeper_value",
+    "misalignment_to_release",
+    "definite_vision",
+    "aligned_action",
+    "habit_loop",
+    "gratitude_anchor",
+    "service_increase_action"
+  ],
+  "safety_never": [
+    "guaranteed_income",
+    "guaranteed_healing",
+    "blame_user_hardship",
+    "replace_professional_advice",
+    "dependency_or_coercion",
+    "fake_spiritual_authority"
+  ],
+  "certification_requirements": [
+    "active_pro",
+    "application",
+    "identity_verification",
+    "ethics_agreement",
+    "training_completion",
+    "written_assessment",
+    "practical_simulation",
+    "supervised_review",
+    "admin_approval",
+    "credential_id_qr",
+    "renewal"
+  ]
+}

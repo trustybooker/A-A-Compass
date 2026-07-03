@@ -25,6 +25,7 @@ const emptyApp = (): ApplicationState => ({
   trainingCompletedAt: null,
   writtenScore: null,
   writtenPassedAt: null,
+  practicalSubmitted: false,
   practicalScore: null,
   practicalPassedAt: null,
   supervisedReviewPassedAt: null,
@@ -39,6 +40,7 @@ const completeApp = (): ApplicationState => ({
   trainingCompletedAt: new Date(),
   writtenScore: 90,
   writtenPassedAt: new Date(),
+  practicalSubmitted: true,
   practicalScore: 85,
   practicalPassedAt: new Date(),
   supervisedReviewPassedAt: new Date(),
@@ -122,6 +124,18 @@ describe("written assessment scoring", () => {
 });
 
 describe("pathway steps", () => {
+  it("shows the practical simulation as awaiting review once submitted but unscored", () => {
+    const steps = pathwaySteps({ ...completeApp(), practicalScore: null, practicalPassedAt: null });
+    const practical = steps.find((s) => s.id === "practical_simulation")!;
+    expect(practical.done).toBe(false);
+    expect(practical.awaitingReview).toBe(true);
+  });
+
+  it("does not show the practical simulation as awaiting review before submission", () => {
+    const practical = pathwaySteps(emptyApp()).find((s) => s.id === "practical_simulation")!;
+    expect(practical.awaitingReview).toBe(false);
+  });
+
   it("renders all eight requirements", () => {
     const steps = pathwaySteps(emptyApp());
     expect(steps.map((s) => s.id)).toEqual([

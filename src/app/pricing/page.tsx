@@ -2,8 +2,14 @@ import Link from "next/link";
 import { TIERS, BROWSER_VOICE_LABEL } from "@/lib/tiers";
 import { getCurrentUser } from "@/lib/current-user";
 import { CheckoutButton } from "@/components/CheckoutButton";
+import { softwareApplicationJsonLd } from "@/lib/structured-data";
 
-export const metadata = { title: "Pricing" };
+export const metadata = {
+  title: "Pricing",
+  description:
+    "A&A Compass pricing: Free $0 (one daily Compass Reading), Plus $19/month (unlimited sessions, history, exports), Pro $99/month (realtime A&A Aligned Voice Coach, weekly reports, certification pathway eligibility). Monthly only, cancel anytime.",
+  alternates: { canonical: "/pricing" },
+};
 export const dynamic = "force-dynamic";
 
 // Exactly three public tiers at launch: Free $0, Plus $19/mo, Pro $99/mo.
@@ -14,6 +20,10 @@ export default async function PricingPage() {
 
   return (
     <div className="space-y-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd()) }}
+      />
       <div className="text-center">
         <h1 className="text-3xl font-extrabold text-stone-900">Simple, honest pricing</h1>
         <p className="mt-2 text-stone-600">

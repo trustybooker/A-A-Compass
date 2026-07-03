@@ -50,6 +50,7 @@ npm run dev
 |---|---|
 | `DATABASE_URL` | Postgres connection string |
 | `AUTH_SECRET` | Auth.js JWT secret (`openssl rand -base64 32`) |
+| `AUTH_TRUST_HOST` | Set to `true` behind a trusted proxy/host (Vercel, most PaaS) |
 | `NEXT_PUBLIC_APP_URL` | Canonical app URL (used in Stripe redirects and QR verification links) |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe API + webhook signature verification |
 | `STRIPE_PRICE_PLUS`, `STRIPE_PRICE_PRO` | The two recurring monthly prices ($19 / $99) |
@@ -60,10 +61,20 @@ npm run dev
 
 Create two recurring monthly prices (Plus $19, Pro $99), put their IDs in the env, and point a webhook at `/api/stripe/webhook` with events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`. The webhook verifies signatures and syncs the user's tier; cancellation keeps access until the period ends, then downgrades to Free.
 
+## Deploying to Vercel
+
+1. Create a Postgres database (Vercel Postgres, Neon, Supabase, or RDS) and copy its connection string.
+2. Import the repository in Vercel (framework preset: Next.js — defaults work; `postinstall` runs `prisma generate` automatically).
+3. In Vercel → Project → Settings → Environment Variables, set every variable from the table above for the Production environment (at minimum: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST=true`, `NEXT_PUBLIC_APP_URL=https://your-domain`, the four `STRIPE_*` vars; add `OPENAI_API_KEY` to enable the Pro voice coach).
+4. Create the database schema from your machine: `DATABASE_URL="<prod-url>" npx prisma db push` (or commit and use `prisma migrate deploy` in CI once you adopt migrations).
+5. Seed the admin: `DATABASE_URL="<prod-url>" SEED_ADMIN_EMAIL=... SEED_ADMIN_PASSWORD=... npm run db:seed`, then change the password after first login.
+6. Deploy, then point the Stripe webhook (below) at `https://your-domain/api/stripe/webhook` and set `STRIPE_WEBHOOK_SECRET` from the endpoint's signing secret. Redeploy so the new env takes effect.
+7. Smoke-test live: sign up, run a free session, hit the daily limit, upgrade with Stripe test card `4242 4242 4242 4242` (test mode), confirm the tier badge flips, then switch Stripe to live keys.
+
 ## Tests
 
 ```bash
-npm test        # 82 tests across 7 suites
+npm test        # 84 tests across 7 suites
 npm run build   # production build with type checking
 ```
 

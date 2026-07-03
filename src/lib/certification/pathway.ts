@@ -37,6 +37,8 @@ export interface ApplicationState {
   trainingCompletedAt: Date | null;
   writtenScore: number | null;
   writtenPassedAt: Date | null;
+  /** Whether a practical simulation transcript has been submitted for staff review. */
+  practicalSubmitted: boolean;
   practicalScore: number | null;
   practicalPassedAt: Date | null;
   supervisedReviewPassedAt: Date | null;
@@ -109,7 +111,7 @@ export function pathwaySteps(app: ApplicationState): PathwayStep[] {
       label: "Practical coaching simulation",
       description: "Complete a coaching simulation; staff score it against the rubric.",
       done: app.practicalPassedAt !== null,
-      awaitingReview: app.practicalScore === null && app.writtenPassedAt !== null && false,
+      awaitingReview: app.practicalSubmitted && app.practicalPassedAt === null,
     },
     {
       id: "supervised_review",

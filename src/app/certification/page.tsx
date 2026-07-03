@@ -122,6 +122,7 @@ export default async function CertificationPage() {
         trainingCompletedAt: application.trainingCompletedAt,
         writtenScore: application.writtenScore,
         writtenPassedAt: application.writtenPassedAt,
+        practicalSubmitted: application.practicalTranscript !== null,
         practicalScore: application.practicalScore,
         practicalPassedAt: application.practicalPassedAt,
         supervisedReviewPassedAt: application.supervisedReviewPassedAt,

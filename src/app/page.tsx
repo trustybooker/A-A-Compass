@@ -1,5 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import {
+  organizationJsonLd,
+  softwareApplicationJsonLd,
+  faqJsonLd,
+} from "@/lib/structured-data";
 
 const SIX_A = [
   ["Awareness", "Reflect what is true right now — no judgment, no story."],
@@ -13,6 +18,12 @@ const SIX_A = [
 export default function LandingPage() {
   return (
     <div className="space-y-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([organizationJsonLd(), softwareApplicationJsonLd(), faqJsonLd()]),
+        }}
+      />
       <section className="grid items-center gap-8 md:grid-cols-2">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-stone-900 md:text-5xl">

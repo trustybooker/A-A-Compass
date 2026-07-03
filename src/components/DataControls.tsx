@@ -48,8 +48,8 @@ export function DataControls() {
       <div className="rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
         <h2 className="font-bold text-red-700">Delete account</h2>
         <p className="mt-1 text-sm text-stone-600">
-          Permanently deletes your account and all personal data. This cannot be undone. If you
-          have an active subscription, cancel it first in the billing portal.
+          Permanently deletes your account and all personal data, and cancels any active
+          subscription immediately. This cannot be undone.
         </p>
         <form onSubmit={deleteAccount} className="mt-4 flex flex-wrap items-center gap-3">
           <input

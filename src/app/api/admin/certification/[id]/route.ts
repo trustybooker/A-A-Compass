@@ -93,6 +93,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           trainingCompletedAt: app.trainingCompletedAt,
           writtenScore: app.writtenScore,
           writtenPassedAt: app.writtenPassedAt,
+          practicalSubmitted: app.practicalTranscript !== null,
           practicalScore: app.practicalScore,
           practicalPassedAt: app.practicalPassedAt,
           supervisedReviewPassedAt: app.supervisedReviewPassedAt,

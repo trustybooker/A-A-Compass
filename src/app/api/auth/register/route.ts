@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { rateLimit, clientIpFrom, tooManyRequests } from "@/lib/rate-limit";
+import { prismaRateLimitStore } from "@/lib/rate-limit-store";
 
 const registerSchema = z.object({
   email: z.string().email().max(200),
@@ -10,6 +12,13 @@ const registerSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const ipLimit = await rateLimit(prismaRateLimitStore, {
+    key: `register:ip:${clientIpFrom(req)}`,
+    limit: 10,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!ipLimit.ok) return tooManyRequests(ipLimit);
+
   const body = await req.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {

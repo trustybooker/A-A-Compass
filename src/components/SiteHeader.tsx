@@ -1,42 +1,66 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/current-user";
 import { TierBadge } from "@/components/TierBadge";
+import { MobileNav, type NavLink } from "@/components/MobileNav";
 import { signOut } from "@/lib/auth";
+
+async function signOutAction() {
+  "use server";
+  await signOut({ redirectTo: "/" });
+}
 
 export async function SiteHeader() {
   const user = await getCurrentUser();
+
+  const links: NavLink[] = user
+    ? [
+        { href: "/dashboard", label: "Dashboard" },
+        { href: "/session/new", label: "New session" },
+        { href: "/history", label: "History" },
+        { href: "/habits", label: "Habits" },
+        { href: "/weekly-report", label: "Weekly report" },
+        { href: "/session/voice-pro", label: "Voice coach" },
+        { href: "/certification", label: "Certification" },
+        { href: "/billing", label: "Billing" },
+        ...(user.role === "ADMIN" ? [{ href: "/admin", label: "Admin" }] : []),
+      ]
+    : [
+        { href: "/pricing", label: "Pricing" },
+        { href: "/auth/login", label: "Log in" },
+        { href: "/auth/sign-up", label: "Start free" },
+      ];
+
   return (
-    <header className="border-b border-stone-200 bg-white">
+    <header className="relative border-b border-stone-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 font-bold text-stone-900">
           <span aria-hidden className="text-xl">🧭</span>
           <span>A&amp;A Compass</span>
+          {user && <TierBadge tier={user.tier} />}
         </Link>
-        <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+
+        {/* Desktop navigation */}
+        <nav className="hidden items-center gap-x-4 text-sm md:flex">
           {user ? (
             <>
-              <Link href="/dashboard" className="hover:text-amber-700">Dashboard</Link>
-              <Link href="/session/new" className="hover:text-amber-700">New session</Link>
-              <Link href="/history" className="hover:text-amber-700">History</Link>
-              <Link href="/habits" className="hover:text-amber-700">Habits</Link>
-              <Link href="/weekly-report" className="hover:text-amber-700">Weekly report</Link>
-              <Link href="/session/voice-pro" className="hover:text-amber-700">Voice coach</Link>
-              <Link href="/certification" className="hover:text-amber-700">Certification</Link>
-              <Link href="/billing" className="hover:text-amber-700">Billing</Link>
-              {user.role === "ADMIN" && (
-                <Link href="/admin" className="font-medium text-emerald-700 hover:text-emerald-800">Admin</Link>
-              )}
-              <span className="flex items-center gap-2">
-                <TierBadge tier={user.tier} />
-                <form
-                  action={async () => {
-                    "use server";
-                    await signOut({ redirectTo: "/" });
-                  }}
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={
+                    link.href === "/admin"
+                      ? "font-medium text-emerald-700 hover:text-emerald-800"
+                      : "hover:text-amber-700"
+                  }
                 >
-                  <button type="submit" className="text-stone-500 hover:text-stone-800">Sign out</button>
-                </form>
-              </span>
+                  {link.label}
+                </Link>
+              ))}
+              <form action={signOutAction}>
+                <button type="submit" className="text-stone-500 hover:text-stone-800">
+                  Sign out
+                </button>
+              </form>
             </>
           ) : (
             <>
@@ -51,6 +75,9 @@ export async function SiteHeader() {
             </>
           )}
         </nav>
+
+        {/* Mobile navigation */}
+        <MobileNav links={links} signedIn={user !== null} signOutAction={signOutAction} />
       </div>
     </header>
   );

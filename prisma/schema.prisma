@@ -93,6 +93,7 @@ model User {
   weeklyReports    WeeklyReport[]
   certApplications CertificationApplication[]
   certifications   Certification[]
+  resetTokens      PasswordResetToken[]
 
   @@map("users")
 }
@@ -124,10 +125,15 @@ model CompassSession {
   gratitudeText String        @db.Text
   coachingMode  String? // Advanced Pro modes: Money, Business, Purpose, Discipline, Peace, Fear Release, Gratitude, Night Review
   source        SessionSource @default(TYPED)
+  // Set only for free-tier sessions (UTC date, e.g. "2026-07-04"). The unique
+  // constraint is a race-proof backstop for the 1/day free limit: concurrent
+  // requests that both pass the count check cannot both insert.
+  freeDayKey    String?
   createdAt     DateTime      @default(now())
 
   result CompassResult?
 
+  @@unique([userId, freeDayKey])
   @@index([userId, createdAt])
   @@map("compass_sessions")
 }
@@ -296,6 +302,29 @@ model CredentialEvent {
 
   @@index([certificationId, createdAt])
   @@map("credential_events")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique // sha256 of the token — the raw token is never stored
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// Fixed-window rate limiting that works across serverless instances.
+model RateLimitBucket {
+  key         String   @id
+  windowStart DateTime
+  count       Int      @default(1)
+  updatedAt   DateTime @updatedAt
+
+  @@map("rate_limit_buckets")
 }
 
 model AuditLog {

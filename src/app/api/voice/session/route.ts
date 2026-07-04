@@ -3,6 +3,8 @@ import { requireFeature, errorResponse } from "@/lib/current-user";
 import { audit } from "@/lib/audit";
 import { buildPatternSummary } from "@/lib/patterns";
 import { buildVoiceSessionInstructions } from "@/lib/coach-prompt";
+import { rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { prismaRateLimitStore } from "@/lib/rate-limit-store";
 
 /**
  * Mint an ephemeral realtime voice session for the premium A&A Aligned Voice
@@ -12,6 +14,14 @@ import { buildVoiceSessionInstructions } from "@/lib/coach-prompt";
 export async function POST() {
   try {
     const user = await requireFeature("pro_voice");
+
+    // Cost guard: realtime voice minutes are the most expensive resource.
+    const usage = await rateLimit(prismaRateLimitStore, {
+      key: `voice:user:${user.id}`,
+      limit: 50,
+      windowMs: 24 * 60 * 60 * 1000,
+    });
+    if (!usage.ok) return tooManyRequests(usage);
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {

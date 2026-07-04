@@ -1,9 +1,12 @@
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, requireFeature, errorResponse } from "@/lib/current-user";
 import { AREAS, STATES, ADVANCED_MODES } from "@/lib/compass/engine";
-import { createSessionOutcome, type SessionRepo } from "@/lib/sessions";
-import { hasFeature } from "@/lib/tiers";
+import { createSessionOutcome, startOfUtcDay, type SessionRepo } from "@/lib/sessions";
+import { dailySessionLimit, hasFeature } from "@/lib/tiers";
+import { rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { prismaRateLimitStore } from "@/lib/rate-limit-store";
 
 const createSchema = z.object({
   area: z.enum(AREAS),
@@ -23,6 +26,15 @@ const sessionRepo: SessionRepo = {
 export async function POST(req: Request) {
   try {
     const user = await requireUser();
+    // Abuse guard for paid tiers ("unlimited" means unmetered human use, not
+    // scripted bulk generation). Free tier is separately capped at 1/day.
+    const usage = await rateLimit(prismaRateLimitStore, {
+      key: `sessions:user:${user.id}`,
+      limit: 100,
+      windowMs: 24 * 60 * 60 * 1000,
+    });
+    if (!usage.ok) return tooManyRequests(usage);
+
     const body = await req.json().catch(() => null);
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) {
@@ -63,36 +75,57 @@ export async function POST(req: Request) {
     const reading = outcome.reading;
     // Persist for every tier: the record enforces the free daily limit and the
     // History FEATURE (cloud history) stays gated to Plus/Pro at read time.
-    const session = await prisma.compassSession.create({
-      data: {
-        userId: user.id,
-        area: input.area,
-        currentState: input.state,
-        desireText: input.desire,
-        fearText: input.fear,
-        gratitudeText: input.gratitude,
-        coachingMode: coachingMode ?? null,
-        source: "TYPED",
-        result: {
-          create: {
-            score: reading.score,
-            alignmentMode: reading.alignmentMode,
-            truthReflection: reading.truthReflection,
-            deeperValue: reading.deeperValue,
-            misalignmentToRelease: reading.misalignmentToRelease,
-            definiteVision: reading.definiteVision,
-            alignedAction: reading.alignedAction,
-            habitLoop: reading.habitLoop,
-            gratitudeAnchor: reading.gratitudeAnchor,
-            serviceAction: reading.serviceAction,
-            plan7Day: reading.plan7Day ?? null,
-            plan30Day: reading.plan30Day ?? null,
-            fullText: reading.fullText,
+    // freeDayKey + unique(userId, freeDayKey) is the race-proof backstop for
+    // the 1/day free limit — concurrent requests cannot both insert.
+    const isLimited = Number.isFinite(dailySessionLimit(user.tier));
+    const freeDayKey = isLimited ? startOfUtcDay().toISOString().slice(0, 10) : null;
+    let session: { id: string };
+    try {
+      session = await prisma.compassSession.create({
+        data: {
+          userId: user.id,
+          area: input.area,
+          currentState: input.state,
+          desireText: input.desire,
+          fearText: input.fear,
+          gratitudeText: input.gratitude,
+          coachingMode: coachingMode ?? null,
+          source: "TYPED",
+          freeDayKey,
+          result: {
+            create: {
+              score: reading.score,
+              alignmentMode: reading.alignmentMode,
+              truthReflection: reading.truthReflection,
+              deeperValue: reading.deeperValue,
+              misalignmentToRelease: reading.misalignmentToRelease,
+              definiteVision: reading.definiteVision,
+              alignedAction: reading.alignedAction,
+              habitLoop: reading.habitLoop,
+              gratitudeAnchor: reading.gratitudeAnchor,
+              serviceAction: reading.serviceAction,
+              plan7Day: reading.plan7Day ?? null,
+              plan30Day: reading.plan30Day ?? null,
+              fullText: reading.fullText,
+            },
           },
         },
-      },
-      select: { id: true },
-    });
+        select: { id: true },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        // Concurrent free-tier request lost the race — same message as the count check.
+        return Response.json(
+          {
+            kind: "limit",
+            error:
+              "You've used today's free Compass Reading. Come back tomorrow — or upgrade to Plus for unlimited sessions, saved history, and deeper plans.",
+          },
+          { status: 429 },
+        );
+      }
+      throw error;
+    }
 
     return Response.json({ kind: "reading", sessionId: session.id, reading });
   } catch (error) {

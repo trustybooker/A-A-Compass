@@ -39,10 +39,12 @@ Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Prisma + PostgreSQL �
 ```bash
 npm install
 cp .env.example .env       # fill in values (see below)
-npx prisma db push          # create schema on your Postgres
+npx prisma migrate deploy   # apply committed migrations to your Postgres
 npm run db:seed             # optional: seed admin from SEED_ADMIN_* env vars
 npm run dev
 ```
+
+Schema changes go through migrations: edit `prisma/schema.prisma`, then `npx prisma migrate dev --name <change>` locally and commit the generated folder. (`npx prisma db push` remains available for throwaway dev databases.)
 
 ### Environment variables
 
@@ -55,6 +57,7 @@ npm run dev
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe API + webhook signature verification |
 | `STRIPE_PRICE_PLUS`, `STRIPE_PRICE_PRO` | The two recurring monthly prices ($19 / $99) |
 | `OPENAI_API_KEY`, `OPENAI_REALTIME_MODEL` | Pro realtime voice (optional — the app degrades gracefully without it) |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Password-reset emails via Resend (optional — resets degrade gracefully without it) |
 | `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` | Admin account for `npm run db:seed` |
 
 ### Stripe setup
@@ -66,7 +69,7 @@ Create two recurring monthly prices (Plus $19, Pro $99), put their IDs in the en
 1. Create a Postgres database (Vercel Postgres, Neon, Supabase, or RDS) and copy its connection string.
 2. Import the repository in Vercel (framework preset: Next.js — defaults work; `postinstall` runs `prisma generate` automatically).
 3. In Vercel → Project → Settings → Environment Variables, set every variable from the table above for the Production environment (at minimum: `DATABASE_URL`, `AUTH_SECRET`, `AUTH_TRUST_HOST=true`, `NEXT_PUBLIC_APP_URL=https://your-domain`, the four `STRIPE_*` vars; add `OPENAI_API_KEY` to enable the Pro voice coach).
-4. Create the database schema from your machine: `DATABASE_URL="<prod-url>" npx prisma db push` (or commit and use `prisma migrate deploy` in CI once you adopt migrations).
+4. Create the database schema from your machine: `DATABASE_URL="<prod-url>" npx prisma migrate deploy` (migrations are committed in `prisma/migrations/`).
 5. Seed the admin: `DATABASE_URL="<prod-url>" SEED_ADMIN_EMAIL=... SEED_ADMIN_PASSWORD=... npm run db:seed`, then change the password after first login.
 6. Deploy, then point the Stripe webhook (below) at `https://your-domain/api/stripe/webhook` and set `STRIPE_WEBHOOK_SECRET` from the endpoint's signing secret. Redeploy so the new env takes effect.
 7. Smoke-test live: sign up, run a free session, hit the daily limit, upgrade with Stripe test card `4242 4242 4242 4242` (test mode), confirm the tier badge flips, then switch Stripe to live keys.
@@ -74,9 +77,11 @@ Create two recurring monthly prices (Plus $19, Pro $99), put their IDs in the en
 ## Tests
 
 ```bash
-npm test        # 84 tests across 7 suites
+npm test        # 9 suites: entitlements, engine, safety, billing, certification, limits, reports, rate limiting, password reset
 npm run build   # production build with type checking
 ```
+
+Point your uptime monitor at `GET /api/health` (checks database connectivity).
 
 The suite covers the launch test plan (docs/AA_Compass_v5_Test_Plan.md): tier entitlements and pricing, the free daily limit, required 6A outputs for every tier/area, plans by tier, Stripe webhook entitlement sync (incl. cancellation and unknown-price rejection), safety classification (crisis / medical / legal / financial / manipulative) and the output claims filter, certification gating (every missing requirement blocks approval; revoked/expired credentials can never display as active), pattern memory, and weekly reports by tier.
 

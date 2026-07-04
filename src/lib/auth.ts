@@ -3,6 +3,8 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
+import { prismaRateLimitStore } from "@/lib/rate-limit-store";
 
 declare module "next-auth" {
   interface Session {
@@ -31,10 +33,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const parsed = credentialsSchema.safeParse(credentials);
+        const email =
+          typeof credentials?.email === "string" ? credentials.email.toLowerCase().trim() : "";
+        const password = typeof credentials?.password === "string" ? credentials.password : "";
+        if (!email || !password) return null;
+        // Brute-force guard: 10 attempts per email per 15 minutes. Runs BEFORE
+        // any other validation so every attempt counts.
+        const attempts = await rateLimit(prismaRateLimitStore, {
+          key: `login:email:${email}`,
+          limit: 10,
+          windowMs: 15 * 60 * 1000,
+        });
+        if (!attempts.ok) return null;
+        const parsed = credentialsSchema.safeParse({ email, password });
         if (!parsed.success) return null;
-        const { email, password } = parsed.data;
-        const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+        const user = await prisma.user.findUnique({ where: { email } });
         if (!user) return null;
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;

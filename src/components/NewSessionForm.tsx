@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { AREAS, STATES, ADVANCED_MODES } from "@/lib/compass/engine";
+import { AREAS, STATES, ADVANCED_MODES, type CompassReading } from "@/lib/compass/engine";
 import type { TierId } from "@/lib/tiers";
 import { BROWSER_VOICE_LABEL } from "@/lib/tiers";
 import { dictateOnce, speechRecognitionSupported } from "@/lib/browser-voice";
-import { ReadingView } from "@/components/ReadingView";
+import { ReadingCard } from "@/components/ReadingCard";
 
 interface ReadingResponse {
   kind: "reading" | "safety" | "limit";
   sessionId?: string;
-  reading?: { fullText: string };
+  reading?: CompassReading;
   message?: string;
   error?: string;
   concern?: string;
@@ -29,8 +29,17 @@ export function NewSessionForm({ tier }: { tier: TierId }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ReadingResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const noticeRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => setSttSupported(speechRecognitionSupported()), []);
+
+  // The outcome must never sit unseen below the fold. ReadingCard scrolls
+  // itself; limit/safety notices scroll here.
+  useEffect(() => {
+    if (result && result.kind !== "reading") {
+      noticeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [result]);
 
   const canUseModes = tier === "pro";
 
@@ -206,7 +215,7 @@ export function NewSessionForm({ tier }: { tier: TierId }) {
       </form>
 
       {result?.kind === "limit" && (
-        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-6">
+        <div ref={noticeRef} className="scroll-mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-6">
           <h2 className="font-bold text-amber-900">Today&apos;s free reading is complete</h2>
           <p className="mt-1 text-amber-800">{result.error}</p>
           <Link
@@ -219,7 +228,7 @@ export function NewSessionForm({ tier }: { tier: TierId }) {
       )}
 
       {result?.kind === "safety" && result.message && (
-        <div className="rounded-2xl border border-sky-300 bg-sky-50 p-6">
+        <div ref={noticeRef} className="scroll-mt-6 rounded-2xl border border-sky-300 bg-sky-50 p-6">
           <h2 className="font-bold text-sky-900">A note before anything else</h2>
           <div className="prose-reading mt-2 text-sky-900">{result.message}</div>
         </div>
@@ -232,11 +241,7 @@ export function NewSessionForm({ tier }: { tier: TierId }) {
               Saved to this device only. Upgrade to Plus for cloud history, streaks, and exports.
             </p>
           )}
-          <ReadingView
-            text={result.reading.fullText}
-            sessionId={result.sessionId}
-            canExport={tier !== "free"}
-          />
+          <ReadingCard reading={result.reading} sessionId={result.sessionId} tier={tier} />
         </div>
       )}
     </div>

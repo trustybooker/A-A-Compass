@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 import { hasFeature } from "@/lib/tiers";
 import { UpgradeGate } from "@/components/UpgradeGate";
-import { ReadingView } from "@/components/ReadingView";
+import { ReadingCard } from "@/components/ReadingCard";
 
 export const metadata = { title: "Compass Reading" };
 export const dynamic = "force-dynamic";
@@ -56,10 +56,27 @@ export default async function SessionDetailPage({
           ← Back to history
         </Link>
       </div>
-      <ReadingView
-        text={session.result.fullText}
+      <ReadingCard
+        reading={{
+          score: session.result.score,
+          alignmentMode: session.result.alignmentMode,
+          area: session.area,
+          state: session.currentState,
+          coachingMode: session.coachingMode,
+          truthReflection: session.result.truthReflection,
+          deeperValue: session.result.deeperValue,
+          misalignmentToRelease: session.result.misalignmentToRelease,
+          definiteVision: session.result.definiteVision,
+          alignedAction: session.result.alignedAction,
+          habitLoop: session.result.habitLoop,
+          gratitudeAnchor: session.result.gratitudeAnchor,
+          serviceAction: session.result.serviceAction,
+          plan7Day: session.result.plan7Day,
+          plan30Day: session.result.plan30Day,
+          fullText: session.result.fullText,
+        }}
         sessionId={session.id}
-        canExport={hasFeature(user.tier, "exports")}
+        tier={user.tier}
       />
     </div>
   );

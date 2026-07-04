@@ -121,12 +121,47 @@ describe("scoring", () => {
 });
 
 describe("engine output safety", () => {
-  it("never emits prohibited claims from any tier/area combination", () => {
-    for (const tier of ["free", "plus", "pro"] as TierId[]) {
-      for (const area of AREAS) {
-        const reading = generateReading({ ...baseInput(tier), area });
-        expect(checkOutputClaims(reading.fullText).ok).toBe(true);
+  it("never emits prohibited claims from any tier/area/day-variant combination", () => {
+    // 10 consecutive seed days cycle through every phrasing pool.
+    for (let day = 1; day <= 10; day++) {
+      const seedDate = new Date(`2026-07-${String(day).padStart(2, "0")}T12:00:00Z`);
+      for (const tier of ["free", "plus", "pro"] as TierId[]) {
+        for (const area of AREAS) {
+          const reading = generateReading({ ...baseInput(tier), area, seedDate });
+          expect(checkOutputClaims(reading.fullText).ok, `${area}/${tier}/day${day}`).toBe(true);
+        }
       }
+    }
+  });
+});
+
+describe("phrasing variety (seeded by day)", () => {
+  it("is deterministic for the same inputs on the same day", () => {
+    const seedDate = new Date("2026-07-04T09:00:00Z");
+    const a = generateReading({ ...baseInput("plus"), seedDate });
+    const b = generateReading({
+      ...baseInput("plus"),
+      seedDate: new Date("2026-07-04T21:30:00Z"), // same day, different time
+    });
+    expect(a.fullText).toBe(b.fullText);
+  });
+
+  it("rotates wording across days so a daily practice stays fresh", () => {
+    const readings = Array.from({ length: 7 }, (_, i) =>
+      generateReading({
+        ...baseInput("free"),
+        seedDate: new Date(`2026-07-${String(i + 1).padStart(2, "0")}T12:00:00Z`),
+      }),
+    );
+    const visions = new Set(readings.map((r) => r.definiteVision));
+    const actions = new Set(readings.map((r) => r.alignedAction));
+    const services = new Set(readings.map((r) => r.serviceAction));
+    expect(visions.size).toBeGreaterThan(1);
+    expect(actions.size).toBeGreaterThan(1);
+    expect(services.size).toBeGreaterThan(1);
+    // ...while every variant still carries all eight required outputs.
+    for (const reading of readings) {
+      for (const key of REQUIRED_OUTPUT_KEYS) expect(reading[key]).toBeTruthy();
     }
   });
 });

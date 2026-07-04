@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { hasFeature, BROWSER_VOICE_LABEL } from "@/lib/tiers";
 import { UpgradeGate } from "@/components/UpgradeGate";
 import { VoiceCoach } from "@/components/VoiceCoach";
+import { VoiceSample } from "@/components/VoiceSample";
 
 export const metadata = { title: "A&A Aligned Voice Coach" };
 export const dynamic = "force-dynamic";
@@ -14,11 +15,14 @@ export default async function VoiceProPage() {
 
   if (!hasFeature(user.tier, "pro_voice")) {
     return (
-      <UpgradeGate
-        requiredTier="pro"
-        featureName="The premium A&A Aligned Voice Coach"
-        detail={`Realtime conversation, interruptions, smart follow-up questions, pattern memory, and weekly coach reports. ${BROWSER_VOICE_LABEL}`}
-      />
+      <div className="mx-auto max-w-2xl space-y-6">
+        <UpgradeGate
+          requiredTier="pro"
+          featureName="The premium A&A Aligned Voice Coach"
+          detail={`Realtime conversation, interruptions, smart follow-up questions, pattern memory, and weekly coach reports. ${BROWSER_VOICE_LABEL}`}
+        />
+        <VoiceSample />
+      </div>
     );
   }
 

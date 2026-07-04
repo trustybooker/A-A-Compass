@@ -5,6 +5,14 @@ import {
   softwareApplicationJsonLd,
   faqJsonLd,
 } from "@/lib/structured-data";
+import { TESTIMONIALS } from "@/lib/testimonials";
+
+// Every claim in this strip is enforced in code — that is the point.
+const TRUST_POINTS = [
+  ["Honest by code, not just copy", "The app is built so it cannot promise income, healing, or outcomes — a claims filter checks every generated word."],
+  ["No dark patterns", "Monthly only, cancel anytime, keep access to the end of the period. Export or delete all of your data in two clicks."],
+  ["Crisis-aware", "If a session touches crisis territory, coaching pauses and points to real human support instead."],
+] as const;
 
 const SIX_A = [
   ["Awareness", "Reflect what is true right now — no judgment, no story."],
@@ -117,6 +125,31 @@ export default function LandingPage() {
           </ul>
         </div>
       </section>
+
+      <section className="grid gap-4 sm:grid-cols-3">
+        {TRUST_POINTS.map(([title, body]) => (
+          <div key={title} className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 className="font-bold text-stone-900">{title}</h3>
+            <p className="mt-1 text-sm text-stone-600">{body}</p>
+          </div>
+        ))}
+      </section>
+
+      {TESTIMONIALS.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold text-stone-900">From real members</h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {TESTIMONIALS.map((t) => (
+              <figure key={t.name + t.quote.slice(0, 20)} className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+                <blockquote className="text-stone-700">“{t.quote}”</blockquote>
+                <figcaption className="mt-3 text-sm font-semibold text-stone-900">
+                  {t.name} <span className="font-normal text-stone-500">· {t.role}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-stone-200 bg-white p-8">
         <h2 className="text-2xl font-bold text-stone-900">Honest by design</h2>

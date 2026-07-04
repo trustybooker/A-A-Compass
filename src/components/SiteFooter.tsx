@@ -3,7 +3,7 @@ import { GLOBAL_DISCLAIMER } from "@/lib/safety";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-stone-200 bg-white">
+    <footer className="mt-16 border-t border-stone-200 bg-white print:hidden">
       <div className="mx-auto max-w-6xl space-y-3 px-4 py-8 text-sm text-stone-500">
         <p className="max-w-3xl">{GLOBAL_DISCLAIMER}</p>
         <p>

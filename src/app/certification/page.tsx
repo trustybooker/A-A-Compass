@@ -95,6 +95,16 @@ export default async function CertificationPage() {
               suspension, revocation, and expiry.
             </p>
           </div>
+          {status === "active" && (
+            <div className="mt-4">
+              <a
+                href="/certification/certificate"
+                className="inline-block rounded-lg bg-emerald-600 px-5 py-2.5 font-semibold text-white hover:bg-emerald-700"
+              >
+                View printable certificate
+              </a>
+            </div>
+          )}
         </div>
         <div className="rounded-xl border border-stone-200 bg-white p-5 text-sm text-stone-600">
           <h2 className="font-semibold text-stone-900">Keeping the credential</h2>

@@ -31,7 +31,7 @@ export async function SiteHeader() {
       ];
 
   return (
-    <header className="relative border-b border-stone-200 bg-white">
+    <header className="relative border-b border-stone-200 bg-white print:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 font-bold text-stone-900">
           <span aria-hidden className="text-xl">🧭</span>

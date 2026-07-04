@@ -1,32 +1,30 @@
 // Password reset tokens: 32 random bytes, sha256-hashed at rest, 60-minute
-// expiry, single use. Pure helpers here; persistence lives in the routes.
+// expiry, single use. Delegates to the generic token helpers in tokens.ts.
 
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import {
+  generateToken,
+  hashToken,
+  tokenHashesMatch as genericTokenHashesMatch,
+  tokenIsValid,
+  type StoredToken,
+} from "@/lib/tokens";
 
 export const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 export function generateResetToken(): { token: string; tokenHash: string } {
-  const token = randomBytes(32).toString("hex");
-  return { token, tokenHash: hashResetToken(token) };
+  return generateToken();
 }
 
 export function hashResetToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
+  return hashToken(token);
 }
 
-export function tokenHashesMatch(a: string, b: string): boolean {
-  const bufA = Buffer.from(a, "hex");
-  const bufB = Buffer.from(b, "hex");
-  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
-}
+export const tokenHashesMatch = genericTokenHashesMatch;
 
-export interface StoredResetToken {
-  expiresAt: Date;
-  usedAt: Date | null;
-}
+export type StoredResetToken = StoredToken;
 
 export function resetTokenIsValid(stored: StoredResetToken, now: Date = new Date()): boolean {
-  return stored.usedAt === null && stored.expiresAt.getTime() > now.getTime();
+  return tokenIsValid(stored, now);
 }
 
 export function resetUrl(token: string, baseUrl?: string): string {

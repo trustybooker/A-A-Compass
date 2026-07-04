@@ -57,7 +57,8 @@ Schema changes go through migrations: edit `prisma/schema.prisma`, then `npx pri
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe API + webhook signature verification |
 | `STRIPE_PRICE_PLUS`, `STRIPE_PRICE_PRO` | The two recurring monthly prices ($19 / $99) |
 | `OPENAI_API_KEY`, `OPENAI_REALTIME_MODEL` | Pro realtime voice (optional — the app degrades gracefully without it) |
-| `RESEND_API_KEY`, `EMAIL_FROM` | Password-reset emails via Resend (optional — resets degrade gracefully without it) |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Transactional email via Resend: password resets, email verification, habit reminders (optional — all degrade gracefully without it) |
+| `CRON_SECRET` | Authorizes the daily reminder cron (`vercel.json` schedules `/api/cron/reminders`; Vercel sends the bearer token automatically) |
 | `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` | Admin account for `npm run db:seed` |
 
 ### Stripe setup

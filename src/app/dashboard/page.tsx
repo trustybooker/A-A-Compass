@@ -6,15 +6,22 @@ import { prisma } from "@/lib/prisma";
 import { dailySessionLimit, hasFeature, TIERS } from "@/lib/tiers";
 import { startOfUtcDay } from "@/lib/sessions";
 import { TierBadge } from "@/components/TierBadge";
+import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
+import { emailConfigured } from "@/lib/email";
 
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ verified?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
+  const { verified } = await searchParams;
 
-  const [todayCount, latest, habitCount] = await Promise.all([
+  const [todayCount, latest, habitCount, record] = await Promise.all([
     prisma.compassSession.count({
       where: { userId: user.id, createdAt: { gte: startOfUtcDay() } },
     }),
@@ -28,7 +35,10 @@ export default async function DashboardPage() {
     hasFeature(user.tier, "habit_tracking")
       ? prisma.habit.count({ where: { userId: user.id, archived: false } })
       : Promise.resolve(0),
+    prisma.user.findUnique({ where: { id: user.id }, select: { emailVerifiedAt: true } }),
   ]);
+  // Only nag about verification when the deployment can actually send email.
+  const showVerifyBanner = !record?.emailVerifiedAt && emailConfigured() && verified !== "1";
 
   const limit = dailySessionLimit(user.tier);
   const freeUsedToday = Number.isFinite(limit) && todayCount >= limit;
@@ -95,6 +105,17 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {verified === "1" && (
+        <p className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Your email is verified. Welcome aboard.
+        </p>
+      )}
+      {verified === "invalid" && (
+        <p className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+          That verification link is invalid or expired — you can resend a fresh one below.
+        </p>
+      )}
+      {showVerifyBanner && <VerifyEmailBanner />}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-stone-900">

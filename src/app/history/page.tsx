@@ -22,12 +22,21 @@ export default async function HistoryPage() {
     );
   }
 
-  const sessions = await prisma.compassSession.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-    include: { result: { select: { score: true, alignmentMode: true, fullText: true } } },
-  });
+  const [sessions, voiceSessions] = await Promise.all([
+    prisma.compassSession.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { result: { select: { score: true, alignmentMode: true, fullText: true } } },
+    }),
+    hasFeature(user.tier, "pro_voice")
+      ? prisma.voiceSession.findMany({
+          where: { userId: user.id, summary: { not: null } },
+          orderBy: { startedAt: "desc" },
+          take: 20,
+        })
+      : Promise.resolve([]),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -69,7 +78,13 @@ export default async function HistoryPage() {
                   {session.result.fullText.slice(0, 400)}…
                 </p>
               )}
-              <div className="mt-3 flex gap-3 text-sm">
+              <div className="mt-3 flex gap-4 text-sm">
+                <Link
+                  href={`/session/${session.id}`}
+                  className="font-medium text-amber-700 hover:underline"
+                >
+                  Open full reading
+                </Link>
                 <a
                   href={`/api/sessions/${session.id}/export`}
                   className="font-medium text-amber-700 hover:underline"
@@ -80,6 +95,29 @@ export default async function HistoryPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {voiceSessions.length > 0 && (
+        <div>
+          <h2 className="text-xl font-bold text-stone-900">Voice coaching sessions</h2>
+          <ul className="mt-3 space-y-4">
+            {voiceSessions.map((voice) => (
+              <li key={voice.id} className="rounded-xl border border-emerald-200 bg-white p-5 shadow-sm">
+                <div className="text-sm text-stone-500">
+                  {voice.startedAt.toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}{" "}
+                  · A&amp;A Aligned Voice Coach
+                </div>
+                <p className="prose-reading mt-2 max-h-48 overflow-y-auto text-sm text-stone-700">
+                  {voice.summary}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

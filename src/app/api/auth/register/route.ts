@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { rateLimit, clientIpFrom, tooManyRequests } from "@/lib/rate-limit";
 import { prismaRateLimitStore } from "@/lib/rate-limit-store";
+import { sendVerificationEmail } from "@/lib/verification";
 
 const registerSchema = z.object({
   email: z.string().email().max(200),
@@ -39,6 +40,8 @@ export async function POST(req: Request) {
     data: { email, passwordHash, name: parsed.data.name ?? null },
   });
   await audit({ userId: user.id, action: "auth.registered", targetType: "user", targetId: user.id });
+  // Best-effort, never blocks registration.
+  await sendVerificationEmail({ id: user.id, email });
 
   return Response.json({ ok: true }, { status: 201 });
 }

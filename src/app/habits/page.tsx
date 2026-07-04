@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/current-user";
+import { prisma } from "@/lib/prisma";
 import { hasFeature } from "@/lib/tiers";
 import { UpgradeGate } from "@/components/UpgradeGate";
 import { HabitsPanel } from "@/components/HabitsPanel";
+import { ReminderToggle } from "@/components/ReminderToggle";
 
 export const metadata = { title: "Habits & streaks" };
 export const dynamic = "force-dynamic";
@@ -21,6 +23,11 @@ export default async function HabitsPage() {
     );
   }
 
+  const record = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { reminderOptIn: true },
+  });
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
@@ -29,6 +36,7 @@ export default async function HabitsPage() {
           Habit shapes destiny. Log the loop daily — small, kept promises compound.
         </p>
       </div>
+      <ReminderToggle initialOptIn={record?.reminderOptIn ?? false} />
       <HabitsPanel />
     </div>
   );

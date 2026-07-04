@@ -72,17 +72,22 @@ enum CredentialEventType {
 }
 
 model User {
-  id               String   @id @default(cuid())
-  email            String   @unique
+  id               String    @id @default(cuid())
+  email            String    @unique
   passwordHash     String
   name             String?
-  role             Role     @default(USER)
+  role             Role      @default(USER)
   // Denormalized entitlement tier; kept in sync by the Stripe webhook.
   // Server-side checks always read this (or the live subscription), never the client.
-  tier             Tier     @default(FREE)
-  stripeCustomerId String?  @unique
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  tier             Tier      @default(FREE)
+  stripeCustomerId String?   @unique
+  // Soft verification: nothing is blocked while unverified, but the state is
+  // tracked and surfaced (and matters for trust/certification review).
+  emailVerifiedAt  DateTime?
+  // Plus/Pro habit reminder emails (tier matrix: "streaks, habit loops, reminders").
+  reminderOptIn    Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   subscription     Subscription?
   sessions         CompassSession[]
@@ -91,9 +96,10 @@ model User {
   habitLogs        HabitLog[]
   voiceSessions    VoiceSession[]
   weeklyReports    WeeklyReport[]
-  certApplications CertificationApplication[]
-  certifications   Certification[]
-  resetTokens      PasswordResetToken[]
+  certApplications   CertificationApplication[]
+  certifications     Certification[]
+  resetTokens        PasswordResetToken[]
+  verificationTokens EmailVerificationToken[]
 
   @@map("users")
 }
@@ -315,6 +321,19 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique // sha256 of the token — the raw token is never stored
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("email_verification_tokens")
 }
 
 // Fixed-window rate limiting that works across serverless instances.

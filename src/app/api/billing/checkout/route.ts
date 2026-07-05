@@ -17,6 +17,22 @@ export async function POST(req: Request) {
       return Response.json({ error: "Invalid tier." }, { status: 400 });
     }
     const tier = parsed.data.tier;
+
+    // Duplicate-subscription guard: a user with a live subscription must
+    // switch plans through the Stripe Customer Portal (which updates the
+    // existing subscription) — a second Checkout would create a second,
+    // separately-billed subscription.
+    const existing = await prisma.subscription.findUnique({ where: { userId: user.id } });
+    if (existing && ["ACTIVE", "TRIALING", "PAST_DUE"].includes(existing.status)) {
+      return Response.json(
+        {
+          error:
+            "You already have an active subscription. Use “Manage subscription” on the Billing page to switch between Plus and Pro — this prevents duplicate charges.",
+        },
+        { status: 409 },
+      );
+    }
+
     const stripe = getStripe();
     const prices = getPriceMap();
 

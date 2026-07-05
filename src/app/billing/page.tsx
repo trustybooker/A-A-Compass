@@ -61,24 +61,37 @@ export default async function BillingPage({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        {user.tier !== "pro" && (
-          <CheckoutButton
-            tier="pro"
-            signedIn
-            label="Upgrade to Pro — $99/mo"
-            className="rounded-lg bg-emerald-600 px-5 py-2.5 font-semibold text-white hover:bg-emerald-700"
-          />
+      <div className="flex flex-wrap items-center gap-3">
+        {/* New Checkout only when there is no live subscription — plan changes
+            go through the Stripe portal so a second subscription can never be
+            created (the API enforces this too). */}
+        {!subscription && (
+          <>
+            <CheckoutButton
+              tier="pro"
+              signedIn
+              label="Upgrade to Pro — $99/mo"
+              className="rounded-lg bg-emerald-600 px-5 py-2.5 font-semibold text-white hover:bg-emerald-700"
+            />
+            <CheckoutButton
+              tier="plus"
+              signedIn
+              label="Upgrade to Plus — $19/mo"
+              className="rounded-lg bg-amber-600 px-5 py-2.5 font-semibold text-white hover:bg-amber-700"
+            />
+          </>
         )}
-        {user.tier === "free" && (
-          <CheckoutButton
-            tier="plus"
-            signedIn
-            label="Upgrade to Plus — $19/mo"
-            className="rounded-lg bg-amber-600 px-5 py-2.5 font-semibold text-white hover:bg-amber-700"
-          />
+        {subscription && (
+          <>
+            <ManageBillingButton />
+            {user.tier === "plus" && (
+              <span className="text-sm text-stone-500">
+                Want Pro? Switch plans inside the portal — your existing subscription updates, no
+                double billing.
+              </span>
+            )}
+          </>
         )}
-        {subscription && <ManageBillingButton />}
       </div>
 
       <p className="text-sm text-stone-500">

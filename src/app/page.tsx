@@ -23,6 +23,15 @@ const SIX_A = [
   ["Abundance", "Connect the desire to service and value for others."],
 ] as const;
 
+const ACHIEVEMENT_FLOW = [
+  ["Desire", "Name what you want with honesty."],
+  ["Order", "Create enough structure for action to land."],
+  ["Action", "Complete one grounded step today."],
+  ["Proof", "Capture evidence that the step happened."],
+  ["Reputation", "Let consistent proof build trust over time."],
+  ["Opportunity", "Move from chasing to being easier to trust, refer, and choose."],
+] as const;
+
 export default function LandingPage() {
   return (
     <div className="space-y-16">
@@ -39,12 +48,12 @@ export default function LandingPage() {
             <br />
             Clarity into action.
             <br />
-            <span className="text-amber-700">Action into a life that increases value.</span>
+            <span className="text-amber-700">Action into visible proof.</span>
           </h1>
           <p className="mt-4 max-w-lg text-lg text-stone-600">
             A&amp;A Compass is a voice-first prosperity alignment coach. Every session ends with a
-            truth reflection, a definite vision, one grounded action, one habit loop, one gratitude
-            anchor, and one way to increase life for someone else.
+            truth reflection, a definite vision, one grounded action, one habit loop, one proof
+            signal, and one way to increase life for someone else.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -94,6 +103,22 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
+        <h2 className="text-2xl font-bold text-stone-900">Sovereign Achievement flow</h2>
+        <p className="mt-2 max-w-2xl text-stone-600">
+          The goal is not motivation for its own sake. The goal is one visible achievement each day:
+          a useful action, a kept promise, a proof signal, and a service step that builds trust.
+        </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {ACHIEVEMENT_FLOW.map(([title, body]) => (
+            <div key={title} className="rounded-xl border border-stone-100 bg-stone-50 p-4">
+              <h3 className="font-bold text-stone-900">{title}</h3>
+              <p className="mt-1 text-sm text-stone-600">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="grid items-center gap-8 md:grid-cols-2">
         <div className="order-2 overflow-hidden rounded-2xl shadow-lg md:order-1">
           <Image
@@ -113,6 +138,7 @@ export default function LandingPage() {
               "One misalignment or pattern to release",
               "A definite vision",
               "One grounded action for today",
+              "One visible proof signal",
               "One habit loop that compounds",
               "One gratitude anchor",
               "One service action that increases life for others",

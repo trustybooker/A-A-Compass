@@ -112,6 +112,10 @@ export function NewSessionForm({ tier }: { tier: TierId }) {
   return (
     <div className="space-y-6">
       <form onSubmit={submit} className="space-y-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Every reading now ends with one visible achievement, one discernment rule, one proof signal, and one service step.
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="text-sm font-medium text-stone-700">Area of life</span>
@@ -164,19 +168,19 @@ export function NewSessionForm({ tier }: { tier: TierId }) {
 
         <label className="block">
           <span className="flex items-center justify-between text-sm font-medium text-stone-700">
-            What do you want more of right now? {voiceButton("desire", setDesire)}
+            What do you want to achieve in the next 24 hours? {voiceButton("desire", setDesire)}
           </span>
           <textarea
             value={desire}
             onChange={(e) => setDesire(e.target.value)}
             rows={3}
             className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2"
-            placeholder="Describe the desire in your own words…"
+            placeholder="Describe the desire or visible result in your own words…"
           />
         </label>
         <label className="block">
           <span className="flex items-center justify-between text-sm font-medium text-stone-700">
-            What fear or pattern keeps getting in the way? {voiceButton("fear", setFear)}
+            What fear, impulse, or pattern keeps getting in the way? {voiceButton("fear", setFear)}
           </span>
           <textarea
             value={fear}
@@ -210,7 +214,7 @@ export function NewSessionForm({ tier }: { tier: TierId }) {
           disabled={busy}
           className="rounded-lg bg-amber-600 px-6 py-2.5 font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
         >
-          {busy ? "Aligning…" : "Generate my Compass Reading"}
+          {busy ? "Aligning…" : "Generate my achievement reading"}
         </button>
       </form>
 

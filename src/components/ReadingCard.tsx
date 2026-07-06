@@ -1,9 +1,8 @@
 "use client";
 
 // The Compass Reading as a designed artifact: score dial, sectioned 6A
-// outcome, a dominant "one action today" card, and next steps that turn the
-// reading into behavior (add the habit loop, return tomorrow).
-// All gating here is UX only — the server decides what tiers can do.
+// outcome, a dominant visible achievement card, and next steps that turn the
+// reading into behavior. All gating here is UX only; the server decides access.
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -24,6 +23,9 @@ export interface ReadingCardData {
   habitLoop: string;
   gratitudeAnchor: string;
   serviceAction: string;
+  achievementTarget?: string | null;
+  decisionRule?: string | null;
+  proofSignal?: string | null;
   plan24Hour?: string | null;
   plan7Day?: string | null;
   plan30Day?: string | null;
@@ -103,8 +105,6 @@ export function ReadingCard({
 
   useEffect(() => {
     setTtsSupported(speechSynthesisSupported());
-    // Bring the artifact into view the moment it exists — the result must
-    // never sit unseen below the fold.
     containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     return () => stopSpeaking();
   }, []);
@@ -143,7 +143,6 @@ export function ReadingCard({
 
   return (
     <div ref={containerRef} className="scroll-mt-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-      {/* Header: score + mode */}
       <div className="flex flex-wrap items-center gap-5">
         <ScoreDial score={reading.score} />
         <div>
@@ -158,28 +157,26 @@ export function ReadingCard({
         </div>
       </div>
 
-      {/* Toolbar */}
       <div className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
         {ttsSupported && (
           <button type="button" onClick={toggleSpeak} className={toolbarButton}>
-            {speaking ? "◼ Stop" : "🔊 Listen (browser voice)"}
+            {speaking ? "Stop" : "Listen (browser voice)"}
           </button>
         )}
         <button type="button" onClick={copy} className={toolbarButton}>
-          {copied ? "Copied ✓" : "Copy"}
+          {copied ? "Copied" : "Copy"}
         </button>
         {canExport && sessionId && (
           <a href={`/api/sessions/${sessionId}/export`} className={toolbarButton}>
-            ⬇ Export
+            Export
           </a>
         )}
         <button type="button" onClick={() => window.print()} className={toolbarButton}>
-          🖨 Print
+          Print
         </button>
       </div>
       {ttsSupported && <p className="mt-1.5 text-xs text-stone-400">{BROWSER_VOICE_LABEL}</p>}
 
-      {/* The 6A outcome */}
       <div className="mt-5 space-y-3">
         <Section label="Truth reflection">{reading.truthReflection}</Section>
         <Section label="Deeper value">{reading.deeperValue}</Section>
@@ -188,16 +185,28 @@ export function ReadingCard({
           “{reading.definiteVision}”
         </Section>
 
-        {/* The one thing that matters most today — visually dominant */}
-        <div className="rounded-xl border-2 border-amber-500 bg-amber-50 p-5">
+        {reading.achievementTarget && (
+          <div className="rounded-xl border-2 border-amber-500 bg-amber-50 p-5">
+            <div className="text-xs font-bold uppercase tracking-wide text-amber-700">
+              Today's visible achievement
+            </div>
+            <p className="mt-1.5 text-[17px] font-semibold leading-relaxed text-stone-900">
+              {reading.achievementTarget}
+            </p>
+          </div>
+        )}
+
+        <div className="rounded-xl border border-amber-200 bg-white p-5">
           <div className="text-xs font-bold uppercase tracking-wide text-amber-700">
-            ⭑ Your one aligned action today
+            One aligned action today
           </div>
           <p className="mt-1.5 text-[17px] font-semibold leading-relaxed text-stone-900">
             {reading.alignedAction}
           </p>
         </div>
 
+        {reading.decisionRule && <Section label="Discernment rule">{reading.decisionRule}</Section>}
+        {reading.proofSignal && <Section label="Proof signal">{reading.proofSignal}</Section>}
         <Section label="One habit loop">{reading.habitLoop}</Section>
         <Section label="Gratitude anchor">{reading.gratitudeAnchor}</Section>
         <Section label="Service / increase-life action">{reading.serviceAction}</Section>
@@ -216,7 +225,6 @@ export function ReadingCard({
         )}
       </div>
 
-      {/* Next steps — the reading must never be a dead end */}
       <div className="mt-6 border-t border-stone-100 pt-5 print:hidden">
         <div className="text-xs font-semibold uppercase tracking-wide text-stone-400">Next steps</div>
         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -226,7 +234,7 @@ export function ReadingCard({
                 href="/habits"
                 className="rounded-lg bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-800"
               >
-                ✓ Habit added — track it
+                Habit added — track it
               </Link>
             ) : (
               <button
@@ -235,7 +243,7 @@ export function ReadingCard({
                 disabled={habitState === "busy"}
                 className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
               >
-                {habitState === "busy" ? "Adding…" : "＋ Add this habit loop to my tracker"}
+                {habitState === "busy" ? "Adding" : "Add this habit loop to my tracker"}
               </button>
             )
           ) : (
@@ -243,21 +251,21 @@ export function ReadingCard({
               href="/pricing"
               className="rounded-lg border border-amber-400 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-50"
             >
-              🔒 Track this habit loop with Plus
+              Track this habit loop with Plus
             </Link>
           )}
           {isFree ? (
             <span className="text-sm text-stone-500">
-              Do the action, log what changed — your next free reading unlocks tomorrow.
+              Do the action, capture proof, and log what changed. Your next free reading unlocks tomorrow.
             </span>
           ) : (
             <Link href="/session/new" className="text-sm font-medium text-amber-700 hover:underline">
-              Run another session →
+              Run another session
             </Link>
           )}
         </div>
         {habitState === "error" && (
-          <p className="mt-2 text-sm text-red-600">Could not add the habit — please try again.</p>
+          <p className="mt-2 text-sm text-red-600">Could not add the habit. Please try again.</p>
         )}
       </div>
     </div>

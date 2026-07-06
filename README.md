@@ -1,12 +1,16 @@
 # A&A Compass v5
 
-A voice-first prosperity alignment coach. It helps people turn desire into clarity, clarity into action, action into habit, and habit into a life that increases value for themselves and others.
+A voice-first prosperity alignment coach. It helps people turn desire into clarity, clarity into action, action into visible proof, visible proof into habit, and habit into a life that increases value for themselves and others.
 
 Behavioral source of truth: **[docs/AA_Compass_v5_Skill_System_Prompt.md](docs/AA_Compass_v5_Skill_System_Prompt.md)** — it governs how the coach reasons, how sessions are structured, what every outcome must include, and what the app must never claim. The full production direction lives in [docs/](docs/).
 
 ## What it is — and is not
 
 Every session runs the **6A Engine** (Awareness → Alignment → Aim → Action → Accumulation → Abundance) and always produces eight outputs: a truth reflection, the deeper value, one misalignment to release, a definite vision, one aligned action, one habit loop, one gratitude anchor, and one service/increase-life action.
+
+The app also now carries a hidden internal achievement discipline: **Boss Skill**. That name is for internal product/operator use only and must not appear in member-facing UI or public coaching output. The public-facing result is a **Sovereign Achievement** layer: daily visible achievement, discernment rule, proof signal, and completion review. Its practical flow is:
+
+**Desire → Order → Action → Proof → Reputation → Opportunity**
 
 It is **not** therapy, not financial/medical/legal advice, not a guaranteed manifestation system, and not an income promise. Safety filters enforce this in code (`src/lib/safety.ts`): crisis language gets supportive referral guidance (988 / findahelpline.com), out-of-scope requests get honest boundaries, manipulative coaching requests are refused, and no generated output may ship a prohibited claim.
 

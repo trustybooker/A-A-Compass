@@ -1,4 +1,4 @@
-// A&A Compass v5 — the 6A Engine.
+// A&A Compass v5 — the 6A Engine with the internal Boss Skill achievement layer.
 // Source of truth: docs/AA_Compass_v5_Skill_System_Prompt.md and
 // docs/AA_Compass_v5_Production_Build_Spec.md.
 //
@@ -8,6 +8,10 @@
 // 4. Action        — choose one grounded action.
 // 5. Accumulation  — create one habit loop.
 // 6. Abundance     — connect the desire to service and value for others.
+//
+// Boss Skill is an internal operator name only. The app must not surface that
+// name to members; user-facing language stays A&A Compass / Sovereign Achievement.
+// The layer adds visible achievement, discernment, and proof-signal outputs.
 //
 // Every reading MUST include the eight required outputs. This engine is
 // deterministic so that outcome guarantees hold without any AI dependency;
@@ -69,7 +73,7 @@ export interface CompassInput {
   seedDate?: Date;
 }
 
-/** The eight required outputs, plus score/mode/plans. */
+/** The eight required outputs, plus score/mode/plans and visible achievement proof. */
 export interface CompassReading {
   score: number;
   alignmentMode: string;
@@ -84,6 +88,9 @@ export interface CompassReading {
   habitLoop: string;
   gratitudeAnchor: string;
   serviceAction: string;
+  achievementTarget: string;
+  decisionRule: string;
+  proofSignal: string;
   plan24Hour: string;
   plan7Day?: string;
   plan30Day?: string;
@@ -183,6 +190,52 @@ const SERVICE_VARIANTS = [
   "Leave one corner of someone's day better than you found it — quietly, concretely, today.",
 ] as const;
 
+const PROOF_SIGNALS: Record<Area, [string, string]> = {
+  Money: [
+    "Save a short note, screenshot, or checklist showing the money fact you faced and the next decision you chose.",
+    "Create a one-line proof note: the balance, bill, price, or plan you clarified today and what you will do next.",
+  ],
+  Business: [
+    "Capture the offer, message, page, demo, or follow-up you improved so reputation has something real to travel with.",
+    "Save or share one useful business proof: a screenshot, short post, offer draft, client note, or before/after improvement.",
+  ],
+  Purpose: [
+    "Save the paragraph, page, outline, or small visible piece that proves purpose moved from thought into form.",
+    "Write a one-sentence completion note that names what you made, who it can help, and the next faithful action.",
+  ],
+  Peace: [
+    "Record the boundary, reset, or quiet block you completed and the one stressor it reduced.",
+    "Save a short before/after note showing what felt noisy before and what became clearer after the action.",
+  ],
+  Discipline: [
+    "Mark the promise kept, with the exact time and evidence that you completed it instead of negotiating with it.",
+    "Save proof of completion: a checked box, timestamp, finished task, or short note that your word held today.",
+  ],
+  Relationships: [
+    "Save the message, repair, appreciation, or listening action you completed without exposing private details.",
+    "Write a private proof note: who you honored, what you said or asked, and how you protected dignity.",
+  ],
+  Creativity: [
+    "Save the draft, sketch, recording, paragraph, design, or screenshot as proof that the idea entered the world.",
+    "Create a before/after or work-in-progress proof signal that shows motion, not perfection.",
+  ],
+  Service: [
+    "Save a private note naming the service action, who it helped, and what became lighter because you acted.",
+    "Capture the resource, answer, introduction, or burden-lifting action you gave without turning it into performance.",
+  ],
+};
+
+const DECISION_RULES: Record<Area, string> = {
+  Money: "Do not chase a money move today unless it creates clarity, lowers pressure, prevents a leak, or supports a real next action.",
+  Business: "Do not chase an opportunity today unless it improves the offer, reaches a real person, or creates visible trust.",
+  Purpose: "Do not chase inspiration today unless it becomes a finished sentence, draft, decision, or useful act.",
+  Peace: "Do not chase relief today if it creates a bigger problem tomorrow; choose the calm action that also creates order.",
+  Discipline: "Do not chase intensity today; choose the smallest promise you can keep fully and on time.",
+  Relationships: "Do not chase approval today; choose honesty, repair, listening, or a clean boundary.",
+  Creativity: "Do not chase perfect taste today; choose one imperfect finished piece that can be improved later.",
+  Service: "Do not chase recognition today; choose the useful action that increases life whether or not anyone applauds.",
+};
+
 /** Small stable string hash for seeded variant selection. */
 function hashSeed(input: string): number {
   let hash = 0;
@@ -231,21 +284,23 @@ function normalize(text: string | undefined | null, fallback: string): string {
 
 function build7DayPlan(area: Area): string {
   return [
-    "7-day rhythm:",
-    "Day 1-2: 10 minutes of alignment (truth + vision), 20 minutes of focused action, 3 minutes of gratitude review.",
-    `Day 3-4: repeat the loop and add one ${area.toLowerCase()}-specific action from this reading.`,
-    "Day 5: review what worked, drop what didn't, and write one sentence of evidence that you moved.",
-    "Day 6: one act of service connected to this desire.",
-    "Day 7: rest, gratitude review, and set the single aim for next week.",
+    "7-day Sovereign Achievement rhythm:",
+    "Day 1: name the desire and the impulse that tries to rule it.",
+    "Day 2: order one area that is leaking time, money, focus, or trust.",
+    "Day 3: replace one weak phrase with a truthful command you can act on.",
+    "Day 4: cut one distraction, false opportunity, or boundary leak.",
+    `Day 5: complete one useful ${area.toLowerCase()} asset, decision, message, or improvement.`,
+    "Day 6: create one proof signal that can travel farther than your explanation.",
+    "Day 7: review what was completed, what was missed, and the next 7-day aim.",
   ].join("\n");
 }
 
 function build30DayPlan(area: Area, advanced: boolean): string {
   const base = [
-    "30-day arc:",
-    "Week 1: run the daily loop (alignment, action, gratitude) and keep every small promise you set.",
+    "30-day achievement arc:",
+    "Week 1: run the daily loop and keep every small promise you set.",
     `Week 2: double down on the one ${area.toLowerCase()} action producing visible evidence; remove one distraction.`,
-    "Week 3: add one act of service or increase for someone else each day, however small.",
+    "Week 3: create a proof signal each day: screenshot, note, draft, offer, lesson, message, or completed step.",
     "Week 4: review the month honestly — what compounded, what to release — and choose the next definite aim.",
   ];
   if (advanced) {
@@ -305,10 +360,16 @@ export function generateReading(input: CompassInput): CompassReading {
 
   const serviceAction = pick(seed, 6, SERVICE_VARIANTS);
 
+  const achievementTarget = `Within the next 24 hours, complete one visible ${areaLower} achievement: ${alignedAction.replace(/\.$/, "")}.`;
+
+  const decisionRule = DECISION_RULES[input.area];
+
+  const proofSignal = pick(seed, 7, PROOF_SIGNALS[input.area]);
+
   const plan24Hour = [
-    "Morning: name the desire and read the gratitude anchor out loud.",
-    "Midday: complete the aligned action.",
-    "Night: record what changed, what you learned, and what you will repeat tomorrow.",
+    "Morning: name the desire, read the gratitude anchor out loud, and choose the exact time block for the aligned action.",
+    "Midday: complete the aligned action and capture the proof signal before moving to the next task.",
+    "Night: record what was completed, what changed, what proof exists, and the next faithful action for tomorrow.",
   ].join("\n");
 
   const plan7Day = hasFeature(input.tier, "plan_7day") ? build7DayPlan(input.area) : undefined;
@@ -321,7 +382,10 @@ export function generateReading(input: CompassInput): CompassReading {
     ["Deeper value", deeperValue],
     ["Misalignment to release", misalignmentToRelease],
     ["Definite vision", definiteVision],
+    ["Today's visible achievement", achievementTarget],
     ["One aligned action today", alignedAction],
+    ["Discernment rule", decisionRule],
+    ["Proof signal", proofSignal],
     ["One habit loop", habitLoop],
     ["Gratitude anchor", gratitudeAnchor],
     ["Service / increase-life action", serviceAction],
@@ -361,6 +425,9 @@ export function generateReading(input: CompassInput): CompassReading {
     habitLoop,
     gratitudeAnchor,
     serviceAction,
+    achievementTarget,
+    decisionRule,
+    proofSignal,
     plan24Hour,
     plan7Day,
     plan30Day,

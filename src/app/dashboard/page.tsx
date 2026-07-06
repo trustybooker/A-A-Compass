@@ -46,10 +46,10 @@ export default async function DashboardPage({
   const cards: Array<{ href: string; title: string; body: string; locked?: string }> = [
     {
       href: "/session/new",
-      title: freeUsedToday ? "Today's reading complete ✓" : "Run today's session",
+      title: freeUsedToday ? "Today's achievement plan complete" : "Create today's visible achievement",
       body: freeUsedToday
-        ? "Your free daily reading is done. Return tomorrow, or upgrade for unlimited sessions."
-        : "Truth, vision, one action, one habit, gratitude, and service — in a few minutes.",
+        ? "Your free daily reading is done. Complete the action, capture proof, then return tomorrow."
+        : "Turn desire into one action, one proof signal, one habit loop, and one increase-life step.",
     },
     {
       href: "/history",
